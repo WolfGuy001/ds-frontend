@@ -10,3 +10,17 @@ output*.wav
 *.protobuf
 APP_SPEC.md
 STATUS.md
+
+# Demo files (visual reference only, not the product)
+frontend/app.jsx
+frontend/icons.jsx
+frontend/panels.jsx
+frontend/pianoRoll.jsx
+frontend/styles.css
+frontend/Sibyl DiffSinger.html
+
+# Build output
+frontend/dist/
+
+# Temp files
+tmp/

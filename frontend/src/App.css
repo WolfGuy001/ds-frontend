@@ -1,0 +1,175 @@
+:root {
+  --bg: #1a1b1d;
+  --bg-grid: #202225;
+  --panel: #2a2d30;
+  --panel-2: #323538;
+  --panel-hi: #3a3d41;
+  --line: rgba(255,255,255,0.06);
+  --line-2: rgba(255,255,255,0.10);
+  --fg: #e8e8ea;
+  --fg-dim: #9aa0a6;
+  --fg-mute: #6b7075;
+  --accent: #ff7a2b;
+  --accent-soft: rgba(255,122,43,0.18);
+  --black-key: #191a1c;
+  --white-key: #26282b;
+  --note: #ff7a2b;
+  --note-sel: #ffb380;
+  --f0: rgba(120,220,255,0.85);
+  --grid-beat: rgba(255,255,255,0.05);
+  --grid-bar: rgba(255,255,255,0.10);
+  --grid-row: rgba(255,255,255,0.025);
+  --danger: #ff4d4d;
+  --success: #4caf50;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #0c0d0e;
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#root { height: 100vh; width: 100vw; }
+
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
+
+button {
+  font-family: inherit; background: none; border: none;
+  color: inherit; cursor: pointer; padding: 0;
+}
+input { font-family: inherit; outline: none; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+
+.icon-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; color: var(--fg-dim);
+  transition: all 120ms ease; cursor: pointer;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.06); color: var(--fg); }
+.icon-btn.active { background: var(--accent-soft); color: var(--accent); }
+
+.section-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--fg-mute);
+  padding: 14px 18px 6px;
+}
+
+/* App layout */
+.app-layout {
+  display: flex; flex-direction: column; height: 100vh;
+}
+.topbar {
+  height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  background: #141517;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+}
+.topbar-left, .topbar-right {
+  display: flex; align-items: center; gap: 8px;
+}
+.main-area {
+  display: flex; flex: 1; overflow: hidden;
+}
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: #17181a;
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.center {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-grid);
+}
+.right-panel {
+  width: 260px; flex-shrink: 0;
+  background: #17181a;
+  border-left: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  transition: all 120ms ease; cursor: pointer;
+}
+.btn-primary {
+  background: var(--accent); color: #fff;
+  font-weight: 600; padding: 8px 20px; border-radius: 10px;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ghost {
+  background: rgba(255,255,255,0.04); color: var(--fg-dim);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--fg); }
+.btn-ghost.active { background: var(--accent-soft); color: var(--accent); }
+
+/* Fields */
+.field {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--fg);
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.field:focus { border-color: var(--accent); }
+
+/* Progress bar */
+.progress-bar {
+  height: 3px; background: rgba(255,255,255,0.08);
+  border-radius: 2px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  transition: width 300ms ease;
+  border-radius: 2px;
+}
+
+/* Piano roll notes */
+.note-el {
+  position: absolute;
+  background: var(--note);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+  display: flex; align-items: center;
+  padding: 0 6px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  z-index: 1;
+}
+.note-el.selected {
+  box-shadow: 0 0 0 1.5px #fff, 0 0 0 3px var(--accent);
+  z-index: 3;
+}
+.note-el .resize {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  width: 5px; cursor: ew-resize;
+  background: rgba(0,0,0,0.25);
+}
+.note-el.selected .resize { background: #fff; }
+.note-el .lyric-input {
+  background: transparent; border: none; outline: none;
+  color: rgba(0,0,0,0.9); font: inherit;
+  width: 100%; padding: 0;
+}
