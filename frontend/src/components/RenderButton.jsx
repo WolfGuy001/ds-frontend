@@ -1,4 +1,4 @@
-// ─── Render Button — triggers inference via bridge server ─
+// ─── Render Button — with full debug logging ────────────
 import { useState } from 'react';
 
 export default function RenderButton({
@@ -7,6 +7,7 @@ export default function RenderButton({
   setAudioUrl, setCurves, curves,
 }) {
   const [disabled, setDisabled] = useState(false);
+  const [lastError, setLastError] = useState('');
 
   const handleRender = async () => {
     if (notes.length === 0) return;
@@ -14,54 +15,57 @@ export default function RenderButton({
     setRenderStatus('rendering');
     setRenderProgress(0);
     setRenderStage('Preparing...');
+    setLastError('');
 
     try {
-      // Update progress periodically (simulate since actual progress comes from pipeline stdout)
-      const progressInterval = setInterval(() => {
-        setRenderProgress(p => Math.min(p + 5, 90));
-      }, 300);
+      const payload = { notes, bpm, voicebank: 'Netriko_Nakayama_AI_v100', speaker: 'standard' };
+      console.log('[Render] Sending:', JSON.stringify(payload).slice(0, 200));
 
       setRenderStage('Sending to engine...');
       const resp = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          notes,
-          bpm,
-          voicebank: 'Netriko_Nakayama_AI_v100',
-          speaker: 'standard',
-        }),
+        body: JSON.stringify(payload),
       });
 
-      clearInterval(progressInterval);
+      console.log('[Render] Response:', resp.status, resp.statusText, resp.headers.get('content-type'));
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({ error: resp.statusText }));
-        throw new Error(err.error || 'Render failed');
+        let errBody = '';
+        try { errBody = await resp.text(); } catch {}
+        console.error('[Render] Error body:', errBody);
+        throw new Error(`Server returned ${resp.status}: ${errBody}`);
       }
 
-      setRenderStage('Processing audio...');
-      setRenderProgress(95);
+      setRenderProgress(90);
+      setRenderStage('Receiving audio...');
 
       const wavBlob = await resp.blob();
-      const url = URL.createObjectURL(wavBlob);
+      console.log('[Render] Got blob:', wavBlob.size, 'bytes, type:', wavBlob.type);
 
-      // Revoke old URL
-      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      if (wavBlob.size < 100) {
+        const text = await wavBlob.text();
+        console.error('[Render] Small response (error JSON?):', text);
+        throw new Error(text || 'Empty audio response');
+      }
+
+      const url = URL.createObjectURL(wavBlob);
+      console.log('[Render] Blob URL:', url);
 
       setAudioUrl(url);
       setRenderProgress(100);
       setRenderStatus('done');
       setRenderStage('Complete');
 
-      // Play audio
       const audio = new Audio(url);
-      audio.play().catch(() => {});
+      audio.onerror = (e) => console.error('[Render] Audio playback error:', e);
+      audio.play().then(() => console.log('[Render] Playing')).catch(e => console.error('[Render] Play rejected:', e));
 
     } catch (err) {
-      console.error('Render failed:', err);
+      console.error('[Render] FAILED:', err);
       setRenderStatus('error');
-      setRenderStage(err.message || 'Unknown error');
+      setRenderStage(err.message || String(err));
+      setLastError(err.stack || err.message);
     } finally {
       setDisabled(false);
     }
@@ -77,6 +81,16 @@ export default function RenderButton({
       >
         {disabled ? 'Rendering...' : '▶ Render'}
       </button>
+
+      {lastError && (
+        <div style={{
+          fontSize: 9, color: 'var(--danger)', wordBreak: 'break-all',
+          background: 'rgba(255,0,0,0.08)', padding: 6, borderRadius: 6,
+          maxHeight: 80, overflow: 'auto',
+        }}>
+          {lastError.split('\n').slice(0, 3).join('\n')}
+        </div>
+      )}
 
       <div style={{ fontSize: 10, color: 'var(--fg-mute)', textAlign: 'center' }}>
         {notes.length} notes, {bpm} BPM

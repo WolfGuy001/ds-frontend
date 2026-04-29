@@ -36,7 +36,7 @@ export default function TransportBar({ bpm, setBpm, renderStatus, renderProgress
         )}
 
         {renderStatus === 'error' && (
-          <span style={{ fontSize: 11, color: 'var(--danger)', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span title={renderStage} style={{ fontSize: 11, color: 'var(--danger)', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             ✗ {renderStage || 'Render failed'}
           </span>
         )}
