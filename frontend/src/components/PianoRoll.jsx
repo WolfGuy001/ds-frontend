@@ -26,7 +26,7 @@ export default function PianoRoll({
   const [scrollLeft, setScrollLeft] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [zoom, setZoom] = useState(64);
-  const [dragState, setDragState] = useState(null);
+  const dragRef = useRef(null);
   const [editingNoteId, setEditingNoteId] = useState(null);
 
   const pxPerBeat = zoom;
@@ -58,7 +58,7 @@ export default function PianoRoll({
 
     if (tool === 'pencil') {
       const tick = Math.max(0, Math.round(x / pxPerTick));
-      const pitch = yToPitch(y + scrollTop);
+      const pitch = yToPitch(y);
       if (pitch >= NOTE_MIN && pitch <= NOTE_MAX) {
         const id = addNote(tick, pitch);
         setSelectedNoteIds(new Set([id]));
@@ -93,10 +93,6 @@ export default function PianoRoll({
   // ─── Note drag logic ────────────────────────────────────
   const startNoteDrag = (e, noteId) => {
     e.stopPropagation();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startTick = notes.find(n => n.id === noteId).tickStart;
-    const startPitch = notes.find(n => n.id === noteId).pitch;
 
     if (tool === 'erase') {
       deleteNotes(new Set([noteId]));
@@ -114,21 +110,23 @@ export default function PianoRoll({
       });
     }
 
-    setDragState({ noteId, startX, startY, startTick, startPitch });
+    const startX = e.clientX;
+    const startY = e.clientY;
+    dragRef.current = { startX, startY };
 
     const onMove = (ev) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      const dx = ev.clientX - dragRef.current.startX;
+      const dy = ev.clientY - dragRef.current.startY;
       const dTick = Math.round(dx / pxPerTick);
       const dPitch = -Math.round(dy / KEY_H);
       if (dTick !== 0 || dPitch !== 0) {
         moveNote(noteId, dTick, dPitch);
-        setDragState(s => ({ ...s, startX: ev.clientX, startY: ev.clientY, startTick: startTick + dTick, startPitch: startPitch + dPitch }));
+        dragRef.current = { startX: ev.clientX, startY: ev.clientY };
       }
     };
 
     const onUp = () => {
-      setDragState(null);
+      dragRef.current = null;
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
@@ -140,15 +138,18 @@ export default function PianoRoll({
   const startResize = (e, noteId) => {
     e.stopPropagation();
     e.preventDefault();
+
+    const origNote = notes.find(n => n.id === noteId);
+    if (!origNote) return;
+    const origLength = origNote.tickLength;
     const startX = e.clientX;
+    dragRef.current = { startX, origLength };
 
     const onMove = (ev) => {
-      const dx = ev.clientX - startX;
+      const dx = ev.clientX - dragRef.current.startX;
       const dTick = Math.round(dx / pxPerTick);
-      const note = notes.find(n => n.id === noteId);
-      if (note) {
-        resizeNote(noteId, Math.max(60, note.tickLength + dTick));
-      }
+      const newLen = Math.max(60, dragRef.current.origLength + dTick);
+      resizeNote(noteId, newLen);
     };
 
     const onUp = () => {
