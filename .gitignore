@@ -1,0 +1,12 @@
+node_modules/
+onnx-models/
+*.wav
+output*.wav
+*.onnx
+*.emb
+*.png
+*.webp
+*.xlsx
+*.protobuf
+APP_SPEC.md
+STATUS.md
