@@ -59,8 +59,9 @@ export default function RenderButton({
       audio.play().catch(() => {});
 
     } catch (err) {
+      console.error('Render failed:', err);
       setRenderStatus('error');
-      setRenderStage(err.message);
+      setRenderStage(err.message || 'Unknown error');
     } finally {
       setDisabled(false);
     }
